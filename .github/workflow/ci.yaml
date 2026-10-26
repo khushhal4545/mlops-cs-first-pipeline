@@ -1,53 +1,44 @@
-#Github actions workflow
-#Github automatically looks for workflow file inside .github/workflows/
 
-#give workflow a meaningful name
+# GitHub Actions CI Pipeline
 name: Iris ML API - CI Pipeline
 
-#define when github should run this worflow
+# Run workflow on push or pull request to main
 on:
-  #run ci whenever code is pushed to main branch or a pull request is created to main branch
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
-# permission to run this workflow on self-hosted runners
 permissions:
   contents: read
-  
-# define the jobs that will run as part of this workflow
+
 jobs:
-    test-and-build:
-        #github provide s a fresh ubuntu vm for this job
-        runs-on: ubuntu-latest
+  test-and-build:
+    runs-on: ubuntu-latest
 
-        # steps
-        steps:
-             #steps-1: Downlload the repo content to the runner
-            - name: Checkout code
-              uses: actions/checkout@v4
+    steps:
+      # Step 1: Checkout repository
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-              #step2: Set up python environment
-            - name: Install Python on Runner
-              uses: actions/setup-python@v5
-              with:
-                python-version: "3.14"
+      # Step 2: Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
 
-              #steps-3  :install the dependencies
-            - name: Install dependencies
-              run: |
-                python -m pip install --upgrade pip
-                pip install -r requirements.txt
+      # Step 3: Install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r models/requirement.txt
 
-              #step4: Run the tests  
-            - name: Run automated tests
-              run: python -m pytest -v
+      # Step 4: Run automated tests
+      - name: Run automated tests
+        env:
+          PYTHONPATH: models
+        run: python -m pytest -v tests/
 
-              #step5: build image only afetr tests have passed
-            - name: Build Docker image
-              run: docker build -t iris-ml-api:${{ githu.sha}} .
-
-           
-               
-      
+      # Step 5: Build Docker image
+      - name: Build Docker image
+        run: docker build -f models/Dockerfile -t iris-ml-api:${{ github.sha }} models
